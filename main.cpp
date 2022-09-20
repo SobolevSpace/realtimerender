@@ -1,6 +1,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "shader.h"
 
@@ -107,6 +110,12 @@ int main() {
 	
 	Shader ourShader("./shader/shader.vs", "./shader/shader.fs");
 
+	glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+	glm::mat4x4 trans(1.0f);
+	trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	trans = glm::scale(trans, glm::vec3(0.5f, 0.5f, 0.5f));
+	vec = trans * vec;
+	//std::cout << vec.x << vec.y << vec.z << std::endl;
 
 	while (!glfwWindowShouldClose(window)) {
 		processInput(window);
@@ -126,6 +135,7 @@ int main() {
 		ourShader.use();
 		ourShader.setInt("texture1", 0);
 		ourShader.setInt("texture2", 1);
+		ourShader.setMat4x4("transform", trans);
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
