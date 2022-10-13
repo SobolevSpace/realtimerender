@@ -6,14 +6,22 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shader.h"
+#include "camera.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "thirdparty/stb_image.h"
 
 void framebuffer_size_callback(GLFWwindow* w, int width, int height);
 void processInput(GLFWwindow* window);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xofs, double yofs);
 
+const int WIDTH = 800;
+const int HEIGHT = 600;
 
+double deltaTime = 0.0f;
+
+Camera cam;
 
 int main() {
 	glfwInit();
@@ -21,21 +29,25 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "Learn opengl", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Learn opengl", NULL, NULL);
 	if (window == NULL) {
 		std::cout << "Failed to create glfw window.\n";
 		glfwTerminate();
 		return -1;
 	}
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 	glfwMakeContextCurrent(window);
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD\n";
 		return -1;
 	}
 
-	glViewport(0, 0, 800, 600);
+	glViewport(0, 0, WIDTH, HEIGHT);
 	glEnable(GL_DEPTH_TEST);
 
 	int nrAttributes;
@@ -169,6 +181,8 @@ int main() {
 	
 	Shader ourShader("./shader/shader.vs", "./shader/shader.fs");
 
+	
+
 	glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
 	glm::mat4x4 trans(1.0f);
 	trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -177,21 +191,17 @@ int main() {
 	//std::cout << vec.x << vec.y << vec.z << std::endl;
 	glm::mat4 view(1.0);
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-	glm::mat4 proj(1.0);
-	proj = glm::perspective(glm::radians(45.0f), 800.f / 600.f, 0.1f, 100.f);
 
-
+	float lastTime = 0.0f;
 	while (!glfwWindowShouldClose(window)) {
-		processInput(window);
+		float currTime = glfwGetTime();
+		deltaTime = currTime - lastTime;
+		lastTime = currTime;
 
+		processInput(window);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-
-		float timeValue = glfwGetTime();
-
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
@@ -201,7 +211,10 @@ int main() {
 		ourShader.use();
 		ourShader.setInt("texture1", 0);
 		ourShader.setInt("texture2", 1);
-		ourShader.setMat4x4("view", view);
+		ourShader.setMat4x4("view", cam.get_view());
+
+		glm::mat4 proj(1.0);
+		proj = glm::perspective(glm::radians(cam.get_zoom()), static_cast<float>(WIDTH) / HEIGHT, 0.1f, 100.f);
 		ourShader.setMat4x4("projection", proj);
 		glBindVertexArray(VAO);
 		for (int i = 0; i < 10; i++) {
@@ -230,4 +243,31 @@ void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		cam.process_keyboard(FORWARD, deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		cam.process_keyboard(LEFT, deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		cam.process_keyboard(BACKWARD, deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		cam.process_keyboard(RIGHT, deltaTime);
+	}
+}
+
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+	static float lastX = WIDTH/2.0;
+	static float lastY = HEIGHT/2.0;
+	float xoffset = xpos - lastX, yoffset = ypos - lastY;
+	lastX = xpos;
+	lastY = ypos;
+	cam.process_mouse_movement(xoffset, -yoffset);
+}
+
+
+void scroll_callback(GLFWwindow* window, double xofs, double yofs) {
+	cam.process_mouse_scroll(static_cast<float>(yofs));
 }
