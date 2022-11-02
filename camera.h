@@ -6,6 +6,11 @@
 
 #include <GLFW/glfw3.h>
 
+/*
+With these 4 components that define an object's material we can simulate many real-world materials. A table as found at devernay.free.fr 
+shows a list of material properties that simulate real materials found in the outside world. The following image shows the effect several of these real world material values have on our cube:
+*/
+
 enum Camera_Movement {
 	FORWARD,
 	BACKWARD,
@@ -49,6 +54,10 @@ public:
 		cameraPosition(camPos), worldUp(_wup), yaw(_yaw), pitch(_pitch), zoom(ZOOM) {
 		cameraDirection = glm::normalize(cameraDirection);
 		updateCameraVectors();
+	}
+
+	glm::vec3 get_pos() {
+		return this->cameraPosition;
 	}
 
 	glm::mat4x4 get_view() {

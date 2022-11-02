@@ -22,4 +22,6 @@ public:
 	void setInt(const std::string& name, int value) const;
 	void setFloat(const std::string& name, float value) const;
 	void setMat4x4(const std::string& name, const glm::mat4x4& value) const;
+	void setMat3x3(const std::string& name, const glm::mat3x3& value) const;
+	void setVec3f(const std::string& name, const glm::vec3& value) const;
 };
